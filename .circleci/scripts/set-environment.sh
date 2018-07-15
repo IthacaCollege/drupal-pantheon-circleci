@@ -15,3 +15,4 @@ set -ex
     echo "export ENV=$(echo ${PR_LABEL:-$CI_LABEL} | cut -c -11 | sed 's/-$//')"
 ) > .environment
 
+bash .environment

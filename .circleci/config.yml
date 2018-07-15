@@ -21,9 +21,12 @@ jobs:
       - checkout
       - run:
           name: Set environment
-          command: .circleci/scripts/set-environment.sh
+          command: |
+            mkdir -p env
+            cd env
+            .circleci/scripts/set-environment.sh
       - persist_to_workspace:
-          root: ./
+          root: env
           paths:
             - .environment
 
@@ -31,10 +34,11 @@ jobs:
     <<: *defaults
     steps:
       - attach_workspace:
-          at: ./
+          at: env
       - run:
           name: Report environment set by script
           command:
+            cd env
             bash .environment
             echo $TEST
             echo $PR_NUMBER
