@@ -22,10 +22,16 @@ jobs:
       - run:
           name: Set environment
           command: .circleci/scripts/set-environment.sh
+      - persist_to_workspace:
+          root: ./
+          paths:
+            - .environment
 
   get-env:
     <<: *defaults
     steps:
+      - attach_workspace:
+          at: ./
       - run:
           name: Report environment set by script
           command:
