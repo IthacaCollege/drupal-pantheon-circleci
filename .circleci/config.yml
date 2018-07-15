@@ -21,7 +21,7 @@ jobs:
       - checkout
       - run:
           name: Set environment from scripts
-          command: ./.circleci/scripts/set-environemt.sh
+          command: ./.circleci/scripts/set-environment.sh
 
   get-script:
     <<: *defaults
