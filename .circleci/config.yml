@@ -26,25 +26,25 @@ jobs:
     <<: *defaults
     steps:
       - checkout
-#      - restore_cache:
-#          name: Restoring cache: composer dependencies
-#          key: composer-{{ checksum "composer-lock.json" }}
+      - restore_cache:
+          name: Restoring cache: composer dependencies
+          key: composer-{{ checksum "composer-lock.json" }}
       - run:
           name: Installing composer dependencies
           command: |
             .circleci/scripts/github-env.sh
             source env.sh
             .circleci/scripts/build-drupal.sh
-#      - save_cache:
-#          name: Saving cache: composer dependecies
-#          key: composer-{{ checksum "composer-lock.json" }}
-#          paths:
-#            - vendor
-#      - persist_to_workspace:
-#          name: Persisting vendor dir
-#          root: ./
-#          paths:
-#            - vendor
+      - save_cache:
+          name: Saving cache: composer dependecies
+          key: composer-{{ checksum "composer-lock.json" }}
+          paths:
+            - vendor
+      - persist_to_workspace:
+          name: Persisting vendor dir
+          root: ./
+          paths:
+            - vendor
 
 #  build-node:
 #    <<: *defaults
