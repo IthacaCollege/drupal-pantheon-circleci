@@ -35,11 +35,11 @@ jobs:
             .circleci/scripts/github-env.sh
             source env.sh
             .circleci/scripts/build-drupal.sh
-#      - save_cache:
-#          name: Saving cache: composer dependecies
-#          key: composer-{{ checksum "composer-lock.json" }}
-#          paths:
-#            - vendor
+      - save_cache:
+          name: Saving cache: composer dependecies
+          key: composer-{{ checksum "composer-lock.json" }}
+          paths:
+            - vendor
 
   build-node:
     <<: *defaults
@@ -52,11 +52,11 @@ jobs:
           name: Installing node dependencies for theme building
           command: |
             .circleci/scripts/build-node.sh
-#      - save_cache:
-#          name: Saving cache: npm install
-#          key: theme-npm-{{ checksum "web/themes/custom/ithaca/package-lock.json" }}
-#          paths:
-#            - web/themes/custom/ithaca/node_modules
+      - save_cache:
+          name: Saving cache: npm install
+          key: theme-npm-{{ checksum "web/themes/custom/ithaca/package-lock.json" }}
+          paths:
+            - web/themes/custom/ithaca/node_modules
 
 
   report-done:
