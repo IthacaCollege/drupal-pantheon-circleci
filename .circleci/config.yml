@@ -53,7 +53,6 @@ jobs:
           command: |
             .circleci/scripts/build-node.sh
       - save_cache:
-          name: Saving cache: npm install
           key: theme-npm-{{ checksum "web/themes/custom/ithaca/package-lock.json" }}
           paths:
             - web/themes/custom/ithaca/node_modules
