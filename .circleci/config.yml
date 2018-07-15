@@ -22,19 +22,19 @@ jobs:
             source env.sh
             .circleci/scripts/pantheon-reset.sh
 
-#  build-drupal:
-#    <<: *defaults
-#    steps:
-#      - checkout
+  build-drupal:
+    <<: *defaults
+    steps:
+      - checkout
 #      - restore_cache:
 #          name: Restoring cache: composer dependencies
 #          key: composer-{{ checksum "composer-lock.json" }}
-#      - run:
-#          name: Installing composer dependencies
-#          command: |
-#            .circleci/scripts/github-env.sh
-#            source env.sh
-#            .circleci/scripts/build-drupal.sh
+      - run:
+          name: Installing composer dependencies
+          command: |
+            .circleci/scripts/github-env.sh
+            source env.sh
+            .circleci/scripts/build-drupal.sh
 #      - save_cache:
 #          name: Saving cache: composer dependecies
 #          key: composer-{{ checksum "composer-lock.json" }}
@@ -81,6 +81,10 @@ workflows:
   build-pr:
     jobs:
       - init-pantheon
+      - build-drupal
+#      - build-node
       - report-done:
           requires:
             - init-pantheon
+            - build-drupal
+#            - build-node
