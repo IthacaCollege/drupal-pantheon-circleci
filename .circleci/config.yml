@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: quay.io/ithacacollege/www-ithaca-ci:v2.0.2
+      - image: quay.io/ithacacollege/www-ithaca-ci:v2.0.1
     environment:
       TZ: "/usr/share/zoneinfo/America/New_York"
 
