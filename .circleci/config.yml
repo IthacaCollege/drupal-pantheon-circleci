@@ -20,7 +20,7 @@ jobs:
 #            echo GIT_TAG=$(git symbolic-ref -q --short HEAD || git describe --tags --exact-match)
       - run:
           name: Report environment from shell script
-          command: .circleci/scripts/report-environment.sh
+          command: ./.circleci/scripts/report-environment.sh
       - run:
           name: Complete
           command: echo "Completed build"
