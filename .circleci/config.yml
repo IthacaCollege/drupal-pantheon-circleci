@@ -1,41 +1,41 @@
 version: 2
+
+defaults: &defaults
+    docker:
+      - image: quay.io/ithacacollege/www-ithaca-ci:v2.0.1
+    environment:
+      TZ: "/usr/share/zoneinfo/America/New_York"
+
 jobs:
-  report-config:
-    docker:
-      - image: quay.io/ithacacollege/www-ithaca-ci:v2.0.1
-    environment:
-      TZ: "/usr/share/zoneinfo/America/New_York"
-
-    steps:
-      - run:
-          name: Report environment variables
-          command: |
-            echo "Reporting variables from config.yml"
-            echo $CIRCLE_BRANCH
-            echo $CIRCLE_PULL_REQUEST
-            echo $CIRCLE_BUILD_NUM
-#            echo $DEPLOYMENT_BRANCH
-#            echo GIT_COMMIT=$(git rev-parse --short HEAD 2> /dev/null | sed 's/\(.*\)/@\1/')
-#            echo GIT_TAG=$(git symbolic-ref -q --short HEAD || git describe --tags --exact-match)
-
-  report-script:
-    docker:
-      - image: quay.io/ithacacollege/www-ithaca-ci:v2.0.1
-    environment:
-      TZ: "/usr/share/zoneinfo/America/New_York"
-
+  report-environment:
+    <<: *defaults
     steps:
       - checkout
       - run:
           name: Report environment from shell script
-          command: ./.circleci/scripts/report-environment.sh
+          command: .circleci/scripts/report-environment.sh
+
+  set-script:
+    <<: *defaults
+    steps:
+      - checkout
+      -run:
+        name: Set environment from scripts
+        command: ./.circleci/scripts/set-environemt.sh
+
+  get-script:
+    <<: *defaults
+    steps:
+      - run:
+          name: Report environment set by script
+          command: |
+            echo $PR_NUMBER
+            echo $PR_LABEL
+            echo $CI_LABEL
+            echo $ENV
 
   report-done:
-    docker:
-      - image: quay.io/ithacacollege/www-ithaca-ci:v2.0.1
-    environment:
-      TZ: "/usr/share/zoneinfo/America/New_York"
-
+    <<: *defaults
     steps:
       - run:
           name: Complete
@@ -45,9 +45,12 @@ workflows:
   version: 2
   test-workflow:
     jobs:
-      - report-config
-      - report-script
+      - report-environment
+      - set-script
+      - get-script:
+          requires:
+            - set-script
       - report-done:
           requires:
-            - report-script
-            - report-config
+            - report-environment
+            - get-script
