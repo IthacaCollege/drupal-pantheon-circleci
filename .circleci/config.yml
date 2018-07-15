@@ -14,7 +14,8 @@ jobs:
       - run:
           name: Report environment from shell script
           command: |
-            .circleci/scripts/report-environment.sh
+            .circleci/scripts/report-env.sh
+            .circleci/scripts/terminus-env.sh
             echo "TERMINUS_ENV": $TERMINUS_ENV
 
 #  environment:
