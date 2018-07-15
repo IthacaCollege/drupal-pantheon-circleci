@@ -48,7 +48,8 @@ jobs:
 #            echo "ENV:" $ENV
 
   report-done:
-    <<: *defaults
+    docker:
+      - image: alpine:3.6
     steps:
       - run:
           name: Complete
