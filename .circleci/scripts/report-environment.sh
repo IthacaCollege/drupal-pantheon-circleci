@@ -2,7 +2,6 @@
 
 set -ex
 
-echo "Reporting variables from shell file"
-echo $CIRCLE_BRANCH
-echo $CIRCLE_PULL_REQUEST
-echo $CIRCLE_BUILD_NUM
+echo "CIRCLE_BRANCH:" $CIRCLE_BRANCH
+echo "CIRCLE_PULL_REQUEST:" $CIRCLE_PULL_REQUEST
+echo "CIRCLE_BUILD_NUM:" $CIRCLE_BUILD_NUM

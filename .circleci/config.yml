@@ -15,7 +15,7 @@ jobs:
           name: Report environment from shell script
           command: .circleci/scripts/report-environment.sh
 
-  set-script:
+  set-env:
     <<: *defaults
     steps:
       - checkout
@@ -23,12 +23,13 @@ jobs:
           name: Set environment
           command: .circleci/scripts/set-environment.sh
 
-  get-script:
+  get-env:
     <<: *defaults
     steps:
       - run:
           name: Report environment set by script
-          command: |
+          command:
+            bash .environment
             echo $TEST
             echo $PR_NUMBER
             echo $PR_LABEL
@@ -47,11 +48,11 @@ workflows:
   test-workflow:
     jobs:
       - report-environment
-      - set-script
-      - get-script:
+      - set-env
+      - get-env:
           requires:
-            - set-script
+            - set-env
       - report-done:
           requires:
             - report-environment
-            - get-script
+            - get-env
