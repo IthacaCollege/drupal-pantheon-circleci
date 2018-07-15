@@ -1,13 +1,12 @@
 version: 2
 jobs:
-  build:
+  report-config:
     docker:
       - image: quay.io/ithacacollege/www-ithaca-ci:v2.0.1
     environment:
       TZ: "/usr/share/zoneinfo/America/New_York"
 
     steps:
-      - checkout
       - run:
           name: Report environment variables
           command: |
@@ -18,9 +17,40 @@ jobs:
 #            echo $DEPLOYMENT_BRANCH
 #            echo GIT_COMMIT=$(git rev-parse --short HEAD 2> /dev/null | sed 's/\(.*\)/@\1/')
 #            echo GIT_TAG=$(git symbolic-ref -q --short HEAD || git describe --tags --exact-match)
+
+  report-script:
+    docker:
+      - image: quay.io/ithacacollege/www-ithaca-ci:v2.0.1
+    environment:
+      TZ: "/usr/share/zoneinfo/America/New_York"
+
+    steps:
+      - checkout
       - run:
           name: Report environment from shell script
           command: ./.circleci/scripts/report-environment.sh
       - run:
           name: Complete
           command: echo "Completed build"
+
+  report-done:
+    docker:
+      - image: quay.io/ithacacollege/www-ithaca-ci:v2.0.1
+    environment:
+      TZ: "/usr/share/zoneinfo/America/New_York"
+
+    steps:
+      - run:
+          name: Complete
+          command: echo "Completed build"
+
+workflows:
+  version: 2
+  one_and_two:
+    jobs:
+      - report-config
+      - report-script
+      - report-done:
+          requires:
+            - report-script
+            - report-config
