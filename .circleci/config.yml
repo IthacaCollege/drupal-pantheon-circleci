@@ -81,10 +81,6 @@ workflows:
   build-pr:
     jobs:
       - init-pantheon
-#      - build-drupal
-#      - build-node
       - report-done:
           requires:
             - init-pantheon
-#            - build-drupal
-#            - build-node
