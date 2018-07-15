@@ -29,9 +29,6 @@ jobs:
       - run:
           name: Report environment from shell script
           command: ./.circleci/scripts/report-environment.sh
-      - run:
-          name: Complete
-          command: echo "Completed build"
 
   report-done:
     docker:
@@ -46,7 +43,7 @@ jobs:
 
 workflows:
   version: 2
-  one_and_two:
+  test-workflow:
     jobs:
       - report-config
       - report-script
