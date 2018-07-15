@@ -14,4 +14,4 @@ then
   TERMINUS_ENV=ci-dev-$CIRCLE_BUILD_NUM
 fi
 
-export TERMINUS_ENV=$TERMINUS_ENV
+echo "export TERMINUS_ENV=$TERMINUS_ENV" >> env.sh

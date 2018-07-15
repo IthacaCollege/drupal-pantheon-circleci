@@ -16,6 +16,7 @@ jobs:
           command: |
             .circleci/scripts/report-env.sh
             .circleci/scripts/terminus-env.sh
+            source env.sh
             echo "TERMINUS_ENV": $TERMINUS_ENV
 
 #  environment:
