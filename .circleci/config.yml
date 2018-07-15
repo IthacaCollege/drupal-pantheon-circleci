@@ -1,10 +1,9 @@
 version: 2
-
 defaults: &defaults
-    docker:
-      - image: quay.io/ithacacollege/www-ithaca-ci:v2.0.1
-    environment:
-      TZ: "/usr/share/zoneinfo/America/New_York"
+  docker:
+    - image: quay.io/ithacacollege/www-ithaca-ci:v2.0.1
+  environment:
+    TZ: "/usr/share/zoneinfo/America/New_York"
 
 jobs:
   report-environment:
