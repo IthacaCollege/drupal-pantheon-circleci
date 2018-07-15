@@ -52,10 +52,10 @@ jobs:
           name: Installing node dependencies for theme building
           command: |
             .circleci/scripts/build-node.sh
-      - save_cache:
-          key: theme-npm-{{ checksum "web/themes/custom/ithaca/package-lock.json" }}
-          paths:
-            - web/themes/custom/ithaca/node_modules
+#      - save_cache:
+#          key: theme-npm-{{ checksum "web/themes/custom/ithaca/package-lock.json" }}
+#          paths:
+#            - web/themes/custom/ithaca/node_modules
 
 
   report-done:
