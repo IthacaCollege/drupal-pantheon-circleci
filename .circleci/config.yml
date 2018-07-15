@@ -36,7 +36,6 @@ jobs:
             source env.sh
             .circleci/scripts/build-drupal.sh
       - save_cache:
-          name: Saving cache: composer dependecies
           key: composer-{{ checksum "composer-lock.json" }}
           paths:
             - vendor
