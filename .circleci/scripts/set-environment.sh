@@ -13,6 +13,6 @@ set -ex
     echo "export PR_LABEL=$CIRCLE_BRANCH:+pr-$PR_NUMBER}"
     echo "export CI_LABEL=ci-$CIRCLE_BUILD_NUM"
     echo "export ENV=$(echo ${PR_LABEL:-$CI_LABEL} | cut -c -11 | sed 's/-$//')"
-) > .environment
+) > env/.environment
 
-bash .environment
+bash env/.environment

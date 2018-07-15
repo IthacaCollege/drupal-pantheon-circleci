@@ -23,7 +23,6 @@ jobs:
           name: Set environment
           command: |
             mkdir -p env
-            cd env
             .circleci/scripts/set-environment.sh
       - persist_to_workspace:
           root: env
