@@ -7,41 +7,43 @@ defaults: &defaults
     TZ: "/usr/share/zoneinfo/America/New_York"
 
 jobs:
-  report-environment:
+  report-env:
     <<: *defaults
     steps:
       - checkout
       - run:
           name: Report environment from shell script
-          command: .circleci/scripts/report-environment.sh
-
-  set-env:
-    <<: *defaults
-    steps:
-      - checkout
-      - run:
-          name: Set environment
           command: |
-            .circleci/scripts/set-environment.sh
-      - persist_to_workspace:
-          root: config
-          paths:
-            - env.sh
+            .circleci/scripts/report-environment.sh
+            echo "TERMINUS_ENV": $TERMINUS_ENV
 
-  get-env:
-    <<: *defaults
-    steps:
-      - attach_workspace:
-          at: config
-      - run:
-          name: Report environment set by script
-          command: |
-            source config/env.sh
-            echo "TEST:" $TEST
-            echo "PR_NUMBER:" $PR_NUMBER
-            echo "PR_LABEL:" $PR_LABEL
-            echo "CI_LABEL:" $CI_LABEL
-            echo "ENV:" $ENV
+#  environment:
+#    <<: *defaults
+#    steps:
+#      - checkout
+#      - run:
+#          name: Set environment
+#          command: |
+#            .circleci/scripts/set-environment.sh
+#      - persist_to_workspace:
+#          root: config
+#          paths:
+#            - env.sh
+
+#  get-terminusenv:
+#    <<: *defaults
+#    steps:
+#      - attach_workspace:
+#          at: config
+#      - run:
+#          name: Report environment set by script
+#          command: |
+#            source config/env.sh
+#            echo "TEST:" $TEST
+#            echo "PR_NUMBER:" $PR_NUMBER
+#            echo "PR_LABEL:" $PR_LABEL
+#            echo "CI_LABEL:" $CI_LABEL
+#            echo "ENV:" $ENV
 
   report-done:
     <<: *defaults
@@ -54,12 +56,10 @@ workflows:
   version: 2
   test-workflow:
     jobs:
-      - report-environment
-      - set-env
-      - get-env:
-          requires:
-            - set-env
+      - report-env:
+          filters:
+            branches:
+              ignore: master
       - report-done:
           requires:
-            - report-environment
-            - get-env
+            - report-env
