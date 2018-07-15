@@ -26,9 +26,12 @@ jobs:
     <<: *defaults
     steps:
       - checkout
-#      - restore_cache:
-#          name: Restoring cache: composer dependencies
-#          key: composer-{{ checksum "composer-lock.json" }}
+      - restore_cache:
+          name: "Restoring cache: composer dependencies"
+          keys:
+            - composer-v1-{{ .Branch }}-{{ checksum "composer-lock.json" }}
+            - composer-v1-{{ .Branch }}-
+            - composer-v1-
       - run:
           name: Installing composer dependencies
           command: |
@@ -36,7 +39,8 @@ jobs:
             source env.sh
             .circleci/scripts/build-drupal.sh
       - save_cache:
-          key: composer-{{ checksum "composer-lock.json" }}
+          name: "Saving cache: composer dependecies"
+          key: composer-v1-{{ .Branch }}-{{ checksum "composer-lock.json" }}
           paths:
             - vendor
 
@@ -44,23 +48,63 @@ jobs:
     <<: *defaults
     steps:
       - checkout
-#      - restore_cache:
-#          name: Restoring cache: npm install
-#          key: theme-npm-{{ checksum "web/themes/custom/ithaca/package-lock.json" }}
+      - restore_cache:
+          name: "Restoring cache: npm install"
+          keys:
+            - theme-npm-v1-{{ .Branch }}-{{ checksum "web/themes/custom/ithaca/package-lock.json" }}
+            - theme-npm-v1-{{ .Branch }}-
+            - theme-npm-v1-
       - run:
           name: Installing node dependencies for theme building
           command: |
             .circleci/scripts/build-node.sh
-#      - save_cache:
-#          key: theme-npm-{{ checksum "web/themes/custom/ithaca/package-lock.json" }}
-#          paths:
-#            - web/themes/custom/ithaca/node_modules
+      - save_cache:
+          name: "Saving cache: npm install"
+          key: theme-npm-v1-{{ .Branch }}-{{ checksum "web/themes/custom/ithaca/package-lock.json" }}
+          paths:
+            - web/themes/custom/ithaca/node_modules
+            - web/themes/custom/ithaca/components/_twig-components/functions
 
+  build-theme:
+    <<: *defaults
+    steps:
+      - checkout
+      - run:
+          name: Generating theme checksum
+          command: ls -laR web/themes/custom/ithaca/components/_patterns > web/themes/custom/ithaca/pattern-checksum
+      - restore_cache:
+          # PatternLab build doesn't have a partial dependency run, so only use the exact cache
+          name: "Restoring cache: theme build"
+          key: theme-build-{{ checksum "web/themes/custom/ithaca/pattern-checksum" }}
+      - restore_cache:
+          # We will need to have built npm by now, so we will have an exact npm cache
+          name: "Restoring cache: npm install"
+          key: theme-npm-v1-{{ .Branch }}-{{ checksum "web/themes/custom/ithaca/package-lock.json" }}
+      - run:
+          name: Building theme
+          command: |
+            .circle/scripts/build-theme.sh
+      - save_cache:
+          name: "Saving cache: theme build"
+            - theme-build-{{ checksum "web/themes/custom/ithaca/pattern-checksum" }}
+          paths:
+            - web/themes/custom/ithaca/pattern_lab
+            - web/themes/custom/ithaca/dist
 
   report-done:
     docker:
       - image: alpine:3.6
     steps:
+      - checkout
+      - run:
+          name: Generating theme checksum
+          command: ls -laR web/themes/custom/ithaca/components/_patterns > web/themes/custom/ithaca/pattern-checksum
+      - restore_cache:
+          name: "Retrieve cache: composer dependencies"
+          key: composer-v1-{{ .Branch }}-{{ checksum "composer-lock.json" }}
+      - restore_cache:
+          name: "Retrieve cache: theme build"
+          key: theme-build-{{ checksum "web/themes/custom/ithaca/pattern-checksum" }}
       - run:
           name: Complete
           command: echo "Completed build"
@@ -72,8 +116,11 @@ workflows:
       - init-pantheon
       - build-drupal
       - build-node
+      - build-theme:
+          requires:
+            - build-node
       - report-done:
           requires:
             - init-pantheon
             - build-drupal
-            - build-node
+            - build-theme
