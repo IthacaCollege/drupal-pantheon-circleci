@@ -2,7 +2,7 @@ version: 2
 
 defaults: &defaults
   docker:
-    - image: quay.io/ithacacollege/www-ithaca-ci:v2.0.1
+    - image: quay.io/ithacacollege/www-ithaca-ci:latest
   environment:
     TZ: "/usr/share/zoneinfo/America/New_York"
     NOTIFY: 'scripts/github/add-commit-comment {project} {sha} "Created multidev environment [{site}#{env}]({dashboard-url})." {site-url}'
@@ -40,11 +40,6 @@ jobs:
 #          key: composer-{{ checksum "composer-lock.json" }}
 #          paths:
 #            - vendor
-      - persist_to_workspace:
-          name: Persisting vendor dir
-          root: ./
-          paths:
-            - vendor
 
   build-node:
     <<: *defaults
@@ -62,11 +57,7 @@ jobs:
 #          key: theme-npm-{{ checksum "web/themes/custom/ithaca/package-lock.json" }}
 #          paths:
 #            - web/themes/custom/ithaca/node_modules
-      - persist_to_workspace:
-          name: Persisting node_modules dir
-          root: web/themes/custom/ithaca/
-          paths:
-            - node_modules
+
 
   report-done:
     docker:
