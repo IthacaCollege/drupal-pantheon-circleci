@@ -26,47 +26,47 @@ jobs:
     <<: *defaults
     steps:
       - checkout
-      - restore_cache:
-          name: Restoring cache: composer dependencies
-          key: composer-{{ checksum "composer-lock.json" }}
+#      - restore_cache:
+#          name: Restoring cache: composer dependencies
+#          key: composer-{{ checksum "composer-lock.json" }}
       - run:
           name: Installing composer dependencies
           command: |
             .circleci/scripts/github-env.sh
             source env.sh
             .circleci/scripts/build-drupal.sh
-      - save_cache:
-          name: Saving cache: composer dependecies
-          key: composer-{{ checksum "composer-lock.json" }}
-          paths:
-            - vendor
+#      - save_cache:
+#          name: Saving cache: composer dependecies
+#          key: composer-{{ checksum "composer-lock.json" }}
+#          paths:
+#            - vendor
       - persist_to_workspace:
           name: Persisting vendor dir
           root: ./
           paths:
             - vendor
 
-#  build-node:
-#    <<: *defaults
-#    steps:
-#      - checkout
+  build-node:
+    <<: *defaults
+    steps:
+      - checkout
 #      - restore_cache:
 #          name: Restoring cache: npm install
 #          key: theme-npm-{{ checksum "web/themes/custom/ithaca/package-lock.json" }}
-#      - run:
-#          name: Installing node dependencies for theme building
-#          command: |
-#            .circleci/scripts/build-node.sh
+      - run:
+          name: Installing node dependencies for theme building
+          command: |
+            .circleci/scripts/build-node.sh
 #      - save_cache:
 #          name: Saving cache: npm install
 #          key: theme-npm-{{ checksum "web/themes/custom/ithaca/package-lock.json" }}
 #          paths:
 #            - web/themes/custom/ithaca/node_modules
-#      - persist_to_workspace:
-#          name: Persisting node_modules dir
-#          root: web/themes/custom/ithaca/
-#          paths:
-#            - node_modules
+      - persist_to_workspace:
+          name: Persisting node_modules dir
+          root: web/themes/custom/ithaca/
+          paths:
+            - node_modules
 
   report-done:
     docker:
@@ -82,9 +82,9 @@ workflows:
     jobs:
       - init-pantheon
       - build-drupal
-#      - build-node
+      - build-node
       - report-done:
           requires:
             - init-pantheon
             - build-drupal
-#            - build-node
+            - build-node
