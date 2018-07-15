@@ -21,26 +21,27 @@ jobs:
       - checkout
       - run:
           name: Set environment
-          command: .circleci/scripts/set-environment.sh
+          command: |
+            .circleci/scripts/set-environment.sh
       - persist_to_workspace:
-          root: env
+          root: config
           paths:
-            - .environment
+            - env.sh
 
   get-env:
     <<: *defaults
     steps:
       - attach_workspace:
-          at: env
+          at: config
       - run:
           name: Report environment set by script
           command: |
-            source env/.environment
-            echo $TEST
-            echo $PR_NUMBER
-            echo $PR_LABEL
-            echo $CI_LABEL
-            echo $ENV
+            source config/env.sh
+            echo "TEST:" $TEST
+            echo "PR_NUMBER:" $PR_NUMBER
+            echo "PR_LABEL:" $PR_LABEL
+            echo "CI_LABEL:" $CI_LABEL
+            echo "ENV:" $ENV
 
   report-done:
     <<: *defaults
