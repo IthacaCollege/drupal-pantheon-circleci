@@ -5,47 +5,68 @@ defaults: &defaults
     - image: quay.io/ithacacollege/www-ithaca-ci:v2.0.1
   environment:
     TZ: "/usr/share/zoneinfo/America/New_York"
+    NOTIFY: 'scripts/github/add-commit-comment {project} {sha} "Created multidev environment [{site}#{env}]({dashboard-url})." {site-url}'
+    TERMINUS_SITE: ithaca-www
+    TEST_SITE_NAME: Ithaca College
+    DEPLOYMENT_BRANCH: develop
 
 jobs:
-  report-env:
+  init-pantheon:
     <<: *defaults
     steps:
       - checkout
       - run:
-          name: Report environment from shell script
+          name: Initializing terminus and multidev
           command: |
-            .circleci/scripts/report-env.sh
             .circleci/scripts/terminus-env.sh
             source env.sh
-            echo "TERMINUS_ENV": $TERMINUS_ENV
+            .circleci/scripts/pantheon-reset.sh
 
-#  environment:
+#  build-drupal:
 #    <<: *defaults
 #    steps:
 #      - checkout
+#      - restore_cache:
+#          name: Restoring cache: composer dependencies
+#          key: composer-{{ checksum "composer-lock.json" }}
 #      - run:
-#          name: Set environment
+#          name: Installing composer dependencies
 #          command: |
-#            .circleci/scripts/set-environment.sh
-#      - persist_to_workspace:
-#          root: config
+#            .circleci/scripts/github-env.sh
+#            source env.sh
+#            .circleci/scripts/build-drupal.sh
+#      - save_cache:
+#          name: Saving cache: composer dependecies
+#          key: composer-{{ checksum "composer-lock.json" }}
 #          paths:
-#            - env.sh
+#            - vendor
+#      - persist_to_workspace:
+#          name: Persisting vendor dir
+#          root: ./
+#          paths:
+#            - vendor
 
-#  get-terminusenv:
+#  build-node:
 #    <<: *defaults
 #    steps:
-#      - attach_workspace:
-#          at: config
+#      - checkout
+#      - restore_cache:
+#          name: Restoring cache: npm install
+#          key: theme-npm-{{ checksum "web/themes/custom/ithaca/package-lock.json" }}
 #      - run:
-#          name: Report environment set by script
+#          name: Installing node dependencies for theme building
 #          command: |
-#            source config/env.sh
-#            echo "TEST:" $TEST
-#            echo "PR_NUMBER:" $PR_NUMBER
-#            echo "PR_LABEL:" $PR_LABEL
-#            echo "CI_LABEL:" $CI_LABEL
-#            echo "ENV:" $ENV
+#            .circleci/scripts/build-node.sh
+#      - save_cache:
+#          name: Saving cache: npm install
+#          key: theme-npm-{{ checksum "web/themes/custom/ithaca/package-lock.json" }}
+#          paths:
+#            - web/themes/custom/ithaca/node_modules
+#      - persist_to_workspace:
+#          name: Persisting node_modules dir
+#          root: web/themes/custom/ithaca/
+#          paths:
+#            - node_modules
 
   report-done:
     docker:
@@ -57,12 +78,13 @@ jobs:
 
 workflows:
   version: 2
-  test-workflow:
+  build-pr:
     jobs:
-      - report-env:
-          filters:
-            branches:
-              ignore: master
+      - init-pantheon
+#      - build-drupal
+#      - build-node
       - report-done:
           requires:
-            - report-env
+            - init-pantheon
+#            - build-drupal
+#            - build-node
