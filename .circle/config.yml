@@ -1,0 +1,26 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: quay.io/ithacacollege/www-ithaca-ci:v2.0.2
+    environment:
+      TZ: "/usr/share/zoneinfo/America/New_York"
+
+    steps:
+      - checkout
+      - run:
+          name: Report environment variables
+          command: |
+            echo "Reporting variables from config.yml"
+            echo $CIRCLE_BRANCH
+            echo $CIRCLE_PULL_REQUEST
+            echo $CIRCLE_BUILD_NUM
+#            echo $DEPLOYMENT_BRANCH
+#            echo GIT_COMMIT=$(git rev-parse --short HEAD 2> /dev/null | sed 's/\(.*\)/@\1/')
+#            echo GIT_TAG=$(git symbolic-ref -q --short HEAD || git describe --tags --exact-match)
+      - run:
+          name: Report environment from shell script
+          command: .circle/scripts/report-environment.sh
+      - run:
+          name: Complete
+          command: echo "Completed build"
