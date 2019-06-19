@@ -1,68 +1,211 @@
 version: 2
 
-defaults: &defaults
+build-image: &build-image
   docker:
-    - image: quay.io/ithacacollege/www-ithaca-ci:v2.0.1
+    - image: quay.io/ithacacollege/www-ithaca-ci:latest
+build-env: &build-env
   environment:
     TZ: "/usr/share/zoneinfo/America/New_York"
+    NOTIFY: 'scripts/github/add-commit-comment {project} {sha} "Created multidev environment [{site}#{env}]({dashboard-url})." {site-url}'
+    TERMINUS_SITE: ithaca-www
+    TEST_SITE_NAME: Ithaca College
+    DEPLOYMENT_BRANCH: develop
+
+defaults: &defaults
+  docker:
+    - image: quay.io/ithacacollege/www-ithaca-ci:latest
+  environment:
+    TZ: "/usr/share/zoneinfo/America/New_York"
+    NOTIFY: 'scripts/github/add-commit-comment {project} {sha} "Created multidev environment [{site}#{env}]({dashboard-url})." {site-url}'
+    TERMINUS_SITE: ithaca-www
+    TEST_SITE_NAME: Ithaca College
+    DEPLOYMENT_BRANCH: develop
 
 jobs:
-  report-env:
+  cache-repo:
     <<: *defaults
     steps:
+      - restore_cache:
+          keys:
+            - source-v1-{{ .Branch }}-{{ .Revision }}
+            - source-v1-{{ .Branch }}-
+            - source-v1-
+      - checkout
+      - save_cache:
+          key: source-v1-{{ .Branch }}-{{ .Revision }}
+          paths:
+            - ".git"
+
+  init-pantheon:
+    <<: *defaults
+    environment:
+      TZ: "/usr/share/zoneinfo/America/New_York"
+      TERMINUS_SITE: ithaca-www
+      TEST_SITE_NAME: Ithaca College
+      DEPLOYMENT_BRANCH: develop
+    steps:
+      - restore_cache:
+          keys:
+            - source-v1-{{ .Branch }}-{{ .Revision }}
       - checkout
       - run:
-          name: Report environment from shell script
+          name: Initializing terminus and multidev
           command: |
-            .circleci/scripts/report-env.sh
             .circleci/scripts/terminus-env.sh
             source env.sh
-            echo "TERMINUS_ENV": $TERMINUS_ENV
+            .circleci/scripts/pantheon-reset.sh
 
-#  environment:
-#    <<: *defaults
-#    steps:
-#      - checkout
-#      - run:
-#          name: Set environment
-#          command: |
-#            .circleci/scripts/set-environment.sh
-#      - persist_to_workspace:
-#          root: config
-#          paths:
-#            - env.sh
+  build-drupal:
+    <<: *defaults
+    steps:
+      - restore_cache:
+          keys:
+            - source-v1-{{ .Branch }}-{{ .Revision }}
+      - checkout
+      - restore_cache:
+          name: "Restoring cache: Drupal dependencies"
+          keys:
+            - composer-v2-{{ .Branch }}-{{ checksum "composer.lock" }}
+            - composer-v2-{{ .Branch }}-
+            - composer-v2
+      - run:
+          name: Installing Drupal composer dependencies
+          command: |
+            .circleci/scripts/github-env.sh
+            source env.sh
+            .circleci/scripts/build-drupal.sh
+      - run:
+          name: Linting custom modules
+          command: |
+            .circleci/scripts/linting-drupal.sh
+      - save_cache:
+          name: "Saving cache: Drupal dependecies"
+          key: composer-v2-{{ .Branch }}-{{ checksum "composer.lock" }}
+          paths:
+            - vendor
+      - save_cache:
+          name: "Saving cache: twig components"
+          key: twig-components-v2-{{ .Branch }}
+          paths:
+            - vendor/drupal-pattern-lab
 
-#  get-terminusenv:
-#    <<: *defaults
-#    steps:
-#      - attach_workspace:
-#          at: config
-#      - run:
-#          name: Report environment set by script
-#          command: |
-#            source config/env.sh
-#            echo "TEST:" $TEST
-#            echo "PR_NUMBER:" $PR_NUMBER
-#            echo "PR_LABEL:" $PR_LABEL
-#            echo "CI_LABEL:" $CI_LABEL
-#            echo "ENV:" $ENV
+  build-theme:
+    <<: *defaults
+    steps:
+      - restore_cache:
+          keys:
+            - source-v1-{{ .Branch }}-{{ .Revision }}
+      - checkout
+      - run:
+          name: Generating theme checksum
+          command: .circleci/scripts/theme-checksum.sh
+      - restore_cache:
+          name: "Restoring cache: theme build"
+          key: theme-build-v2-{{ checksum "web/themes/custom/ithaca/pattern-checksum" }}
+      - restore_cache:
+          name: "Restoring cache: twig components"
+          key: twig-components-v2-{{ .Branch }}
+      - run:
+          name: Installing node dependencies
+          command: |
+            .circleci/scripts/build-node.sh
+      - run:
+          name: Building theme and linting
+          command: |
+            .circleci/scripts/build-theme.sh
+            .circleci/scripts/linting-js.sh
+      - save_cache:
+          name: "Saving cache: theme build"
+          key: theme-build-v2-{{ checksum "web/themes/custom/ithaca/pattern-checksum" }}
+          paths:
+            - web/themes/custom/ithaca/node_modules
+            - web/themes/custom/ithaca/components/_twig-components/functions
+            - web/themes/custom/ithaca/pattern_lab
+            - web/themes/custom/ithaca/dist
+
+  clone-multidev:
+    docker:
+      - image: alpine:3.6
+    steps:
+      - restore_cache:
+          key: source-v1-{{ .Branch }}-{{ .Revision }}
+      - checkout
+      - restore_cache:
+          key: legacy-content-{{ .Branch }}
+      - run:
+          name: Cloning multidev
+          command: |
+            .circleci/scripts/terminus-env.sh
+            source env.sh
+            .circleci/scripts/pantheon-create-multidev.sh
+      # @TODO: Unclear how this file is getting used
+      - save_cache:
+          key: legacy-content-{{ .Branch }}
+          paths:
+              - LegacyContentCrawler_Content.csv
 
   report-done:
     docker:
       - image: alpine:3.6
     steps:
+      - restore_cache:
+          keys:
+            - source-v1-{{ .Branch }}-{{ .Revision }}
+      - checkout
+      - restore_cache:
+          name: "Retrieve cache: Drupal dependencies"
+          key: composer-v2-{{ .Branch }}-{{ checksum "composer.lock" }}
+      - run:
+          name: Generating theme checksum
+          command: .circleci/scripts/theme-checksum.sh
+      - restore_cache:
+          name: "Retrieve cache: theme build"
+          key: theme-build-v2-{{ checksum "web/themes/custom/ithaca/pattern-checksum" }}
       - run:
           name: Complete
           command: echo "Completed build"
 
 workflows:
   version: 2
-  test-workflow:
+  build-pr:
     jobs:
-      - report-env:
-          filters:
-            branches:
-              ignore: master
+      - cache-repo
+      - init-pantheon:
+          requires:
+            - cache-repo
+      - build-drupal:
+          requires:
+            - cache-repo
+      - build-theme:
+          requires:
+            - cache-repo
+            - build-drupal
+#      - clone-multidev:
+#          requires:
+#            - build-drupal
+#            - build-theme
       - report-done:
           requires:
-            - report-env
+            - build-drupal
+            - build-theme
+#            - clone-multidev
+#      - deploy-dev:
+#          requires:
+#            - build-drupal
+#            - build-theme
+#          filters:
+#            branches:
+#              only: develop
+#      - deploy-test:
+#          requires:
+#            - build-drupal
+#            - build-theme
+#          filters:
+#            branches:
+#              only: master
+#      - deploy-live:
+#          filters:
+#            tags:
+#              only: /^v.*/
+#            branches:
+#              only: master
